@@ -26,7 +26,7 @@ class Generator(nn.Module):
     def __init__(self, in_channels=3, out_channels=3, n_residual_blocks=9):  # 默认需要9个残差块
         super().__init__()
 
-        # 初始化卷积快
+        # 初始化卷积块
         model = [
             nn.ReflectionPad2d(3),
             nn.Conv2d(in_channels, 64, kernel_size=7),
