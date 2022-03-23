@@ -1,5 +1,9 @@
+import os.path
+
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.autograd import Variable
 
 
 class ResidualBlock(nn.Module):
@@ -156,6 +160,90 @@ class Attention(nn.Module):
             nn.Conv2d(32, 1, kernel_size=7, stride=1, padding=3),
             nn.Sigmoid()
         ]
+
+        self.model = nn.Sequential(*model)
+
+    def forward(self, x):
+        return self.model(x)
+
+
+# Add VGG loss
+def vgg_preprocess(batch, opt):
+    tensortype = type(batch.data)
+    (r, g, b) = torch.chunk(batch, 3, dim=1)
+    batch = torch.cat((b, g, r), dim=1)  # convert RGB to BGR
+    batch = (batch + 1) * 255 * 0.5  # [-1, 1] -> [0, 255]
+    if opt.vgg_mean:
+        mean = tensortype(batch.data.size())
+        mean[:, 0, :, :] = 103.939
+        mean[:, 1, :, :] = 116.779
+        mean[:, 2, :, :] = 123.680
+        batch = batch.sub(Variable(mean))  # subtract mean
+    return batch
+
+
+# Perceptual Loss
+class PerceptualLoss(nn.Module):
+    def __init__(self, opt):
+        super(PerceptualLoss, self).__init__()
+        self.opt = opt
+        self.instancenorm = nn.InstanceNorm2d(512, affine=False)
+
+    def compute_vgg_loss(self, vgg, img, target):
+        img_vgg = vgg_preprocess(img, self.opt)
+        target_vgg = vgg_preprocess(target, self.opt)
+        img_fea = vgg(img_vgg, self.opt)
+        target_fea = vgg(target_vgg, self.opt)
+        if self.opt.no_vgg_instance:
+            return torch.mean((img_fea - target_fea) ** 2)
+        else:
+            return torch.mean((self.instancenorm(img_fea) - self.instancenorm(target_fea)) ** 2)
+
+
+# 加载Vgg预训练模型
+def load_vgg16(model_dir, gpu_ids):
+    if not os.path.exists(model_dir):
+        print('没有预训练模型')
+        os.mkdir(model_dir)
+
+    vgg = Vgg16()
+    vgg.cuda(device=gpu_ids[0])
+    vgg.load_state_dict(torch.load(os.path.join(model_dir, 'vgg16.weight')))
+    vgg = nn.DataParallel(vgg, gpu_ids)
+    return vgg
+
+
+# Vgg16 Module 这里直接返回卷积最高层
+class Vgg16(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        model = [nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1),
+                 nn.ReLU(inplace=True),
+                 nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
+                 nn.ReLU(inplace=True)]
+
+        model += [nn.MaxPool2d(kernel_size=2, stride=2),
+                  nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
+                  nn.ReLU(inplace=True),
+                  nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),
+                  nn.ReLU(inplace=True)]
+
+        model += [nn.MaxPool2d(kernel_size=2, padding=1),
+                  nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1),
+                  nn.ReLU(inplace=True),
+                  nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),
+                  nn.ReLU(inplace=True),
+                  nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),
+                  nn.ReLU(inplace=True)]
+
+        model += [nn.MaxPool2d(kernel_size=2, padding=1),
+                  nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1),
+                  nn.ReLU(inplace=True),
+                  nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),
+                  nn.ReLU(inplace=True),
+                  nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),
+                  nn.ReLU(inplace=True)]
 
         self.model = nn.Sequential(*model)
 

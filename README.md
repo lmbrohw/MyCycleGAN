@@ -1,2 +1,2 @@
 # MyCycleGAN
-reimplemention of cycleGAN and improve it lightly
+reimplementation of CycleGAN and improve it lightly
