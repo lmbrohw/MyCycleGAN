@@ -5,6 +5,7 @@ import numpy as np
 import cv2
 import math
 import tensorflow as tf
+from matplotlib import pyplot as plt
 from tensorflow.python.platform import gfile
 
 
@@ -143,3 +144,36 @@ class FaceSeg:
         image_input = self.input_transform(image)
         output = self._sess.run(self.output_op, feed_dict={self.input_op: image_input})[0]
         return self.output_transform(output, shape=image.shape[:2])
+
+
+if __name__ == '__main__':
+    image_name = 'test.jpg'
+    img = cv2.cvtColor(cv2.imread(os.path.join('dataset', 'img', image_name)), cv2.COLOR_BGR2RGB)
+    # 打印原图出来看看
+    plt.title('img')
+    plt.imshow(img)
+    plt.show()
+
+    # 检测人脸+裁剪多余背景
+    detector = FaceDetect('cpu', 'dlib')
+    image_align, landmarks_align = detector.align(img)
+    face = detector.crop(image_align, landmarks_align)
+
+    cv2.imwrite('./dataset/face/' + image_name, face[:, :, ::-1])
+
+    # 抠出人脸
+    # 得到mask
+    mask_dir = os.path.join(os.getcwd(), 'dataset', 'result_seg', image_name)
+    segment = FaceSeg()
+    mask = segment.get_mask(face)
+
+    cv2.imwrite(mask_dir, mask)
+
+    # mask与face计算
+    splice = np.dstack((face, mask))
+    splice_face = splice[:, :, :3].copy()
+    splice_mask = splice[:, :, 3][:, :, np.newaxis].copy() / 255.
+    face_in_white_bg = (splice_face * splice_mask + (1 - splice_mask) * 255) / 127.5 - 1
+
+    cv2.imwrite(os.path.join(os.getcwd(), 'datasets/test/', 'A', image_name),
+                cv2.cvtColor(face_in_white_bg, cv2.COLOR_RGB2BGR))

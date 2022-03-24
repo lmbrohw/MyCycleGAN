@@ -16,7 +16,7 @@ parser.add_argument('--n_epochs', type=int, default=200, help='number of epochs 
 parser.add_argument('--input_nc', type=int, default=3, help='input image channels: 3 for RGB and 1 for grayscale')
 parser.add_argument('--output_nc', type=int, default=3, help='output image channels: 3 for RGB and 1 for grayscale')
 parser.add_argument('--batch_size', type=int, default=1, help='input batch size')
-parser.add_argument('--dataroot', type=str, default='datasets/photo2cartoon/', help='root directory of the dataset')
+parser.add_argument('--dataroot', type=str, default='datasets/', help='root directory of the dataset')
 parser.add_argument('--lr', type=float, default=0.0002, help='initial the learning rate')
 parser.add_argument('--decay_epoch', type=int, default=100, help='')
 parser.add_argument('--size', type=int, default=256, help='size of the photo')
@@ -118,10 +118,10 @@ for epoch in range(opt.epoch, opt.n_epochs):
         optimizer_Attn.zero_grad()
 
         # Identity loss
-        same_B = netG_A2B(real_B)
-        loss_identity_B = criterion_identity(same_B, real_B) * 5.0
         same_A = netG_B2A(real_A)
         loss_identity_A = criterion_identity(same_A, real_A) * 5.0
+        same_B = netG_A2B(real_B)
+        loss_identity_B = criterion_identity(same_B, real_B) * 5.0
 
         # GAN loss
         fake_B = netG_A2B(real_A)
