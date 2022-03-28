@@ -9,6 +9,7 @@ from PIL import Image
 from models import *
 from preprocess import *
 from dataset import ImageDataset
+from utils import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--epoch', type=int, default=0, help='')
@@ -79,6 +80,7 @@ lr_scheduler_D_B = torch.optim.lr_scheduler.LambdaLR(optimizer_D_B,
                                                      lr_lambda=LambdaLR(opt.n_epochs, opt.epoch, opt.decay_epoch).step)
 lr_scheduler_Attn = torch.optim.lr_scheduler.LambdaLR(optimizer_Attn,
                                                       lr_lambda=LambdaLR(opt.n_epochs, opt.epoch, opt.decay_epoch).step)
+# lr_scheduler_Attn = torch.optim.lr_scheduler.MultiStepLR(optimizer_Attn, milestones=[30], gamma=0.1, last_epoch=startEpoch -1)
 
 # Dataset loader
 transforms_ = [transforms.Resize(int(opt.size * 1.12), Image.BICUBIC),  # 调整输入图片的大小
@@ -137,7 +139,7 @@ for epoch in range(opt.epoch, opt.n_epochs):
         recovered_B = netG_A2B(fake_A)  # G_A2B(G_B2A(real_B))
         loss_cycle_BAB = criterion_cycle(recovered_B, real_B) * 10.0
 
-        # vgg loss
+        # Vgg loss
         loss_vgg_A2B = vgg_loss.compute_vgg_loss(vgg, fake_B, real_A)
         loss_vgg_B2A = vgg_loss.compute_vgg_loss(vgg, fake_A, real_B)
 

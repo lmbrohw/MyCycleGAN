@@ -1,4 +1,5 @@
 import os
+import random
 
 import face_alignment
 import numpy as np
@@ -46,6 +47,7 @@ class FaceDetect:
     def rotate_image(self, image, landmarks):
         left_eye_corner = landmarks[36]
         right_eye_corner = landmarks[45]
+
         radian = np.arctan((left_eye_corner[1] - right_eye_corner[1]) / (left_eye_corner[0] - right_eye_corner[0]))
 
         height, width, depth = image.shape
@@ -147,33 +149,42 @@ class FaceSeg:
 
 
 if __name__ == '__main__':
-    image_name = 'test.jpg'
-    img = cv2.cvtColor(cv2.imread(os.path.join('dataset', 'img', image_name)), cv2.COLOR_BGR2RGB)
-    # 打印原图出来看看
-    plt.title('img')
-    plt.imshow(img)
-    plt.show()
+    for i in range(1):
+        prefix = random.randint(201, 250)
+        image_name = str(prefix) + '.png'
+        # image_name = 'WechatIMG2.jpeg'
+        img = cv2.cvtColor(cv2.imread(os.path.join('data', image_name)), cv2.COLOR_BGR2RGB)
+        # 打印原图出来看看
+        plt.title('img')
+        plt.imshow(img)
+        plt.show()
 
-    # 检测人脸+裁剪多余背景
-    detector = FaceDetect('cpu', 'dlib')
-    image_align, landmarks_align = detector.align(img)
-    face = detector.crop(image_align, landmarks_align)
+        # 检测人脸+裁剪多余背景
+        detector = FaceDetect('cpu', 'dlib')
+        image_align, landmarks_align = detector.align(img)
+        face = detector.crop(image_align, landmarks_align)
 
-    cv2.imwrite('./dataset/face/' + image_name, face[:, :, ::-1])
+        # cv2.imwrite('./datasets/face/' + image_name, face[:, :, ::-1])
 
-    # 抠出人脸
-    # 得到mask
-    mask_dir = os.path.join(os.getcwd(), 'dataset', 'result_seg', image_name)
-    segment = FaceSeg()
-    mask = segment.get_mask(face)
+        # 抠出人脸
+        # 得到mask
+        # mask_dir = os.path.join(os.getcwd(), 'datasets', 'result_seg', image_name)
+        segment = FaceSeg()
+        mask = segment.get_mask(face)
 
-    cv2.imwrite(mask_dir, mask)
+        # cv2.imwrite(mask_dir, mask)
 
-    # mask与face计算
-    splice = np.dstack((face, mask))
-    splice_face = splice[:, :, :3].copy()
-    splice_mask = splice[:, :, 3][:, :, np.newaxis].copy() / 255.
-    face_in_white_bg = (splice_face * splice_mask + (1 - splice_mask) * 255) / 127.5 - 1
+        # mask与face计算
+        splice = np.dstack((face, mask))
+        splice_face = splice[:, :, :3].copy()
+        splice_mask = splice[:, :, 3][:, :, np.newaxis].copy() / 255.
+        face_in_white_bg = (splice_face * splice_mask + (1 - splice_mask) * 255).astype(np.uint8)  # 429 429 3 背景变白色
 
-    cv2.imwrite(os.path.join(os.getcwd(), 'datasets/test/', 'A', image_name),
-                cv2.cvtColor(face_in_white_bg, cv2.COLOR_RGB2BGR))
+        # plt.title('face_white_bg')
+        # plt.imshow(face_in_white_bg)
+        # plt.show()
+
+        cv2.imwrite(os.path.join(os.getcwd(), 'datasets/test/', 'A', image_name),
+                    cv2.cvtColor(face_in_white_bg, cv2.COLOR_RGB2BGR))
+
+# Thanks to dataset provider:Copyright(c) 2018, seeprettyface.com, BUPT_GWY contributes the dataset.
