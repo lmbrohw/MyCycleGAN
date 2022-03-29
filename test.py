@@ -13,11 +13,11 @@ parser.add_argument('--input_nc', type=int, default=3, help='input image channel
 parser.add_argument('--output_nc', type=int, default=3, help='output image channels: 3 for RGB and 1 for grayscale')
 parser.add_argument('--batch_size', type=int, default=1, help='input batch size')
 parser.add_argument('--dataroot', type=str, default='datasets/', help='root directory of the dataset')
-parser.add_argument('--size', type=int, default=256, help='size of the photo')
-parser.add_argument('--n_cpu', type=int, default=8, help='number of cpu threads to use during batch generation')
+parser.add_argument('--size', type=int, default=512, help='size of the photo')
+parser.add_argument('--n_cpu', type=int, default=0, help='number of cpu threads to use during batch generation')
 parser.add_argument('--cuda', action='store_true', help='use GPU')
-parser.add_argument('--generator_A2B', type=str, default='output/netG_A2B.pth', help='A2B generator checkpoint file')
-parser.add_argument('--generator_B2A', type=str, default='output/netG_B2A.pth', help='B2A generator checkpoint file')
+parser.add_argument('--generator_A2B', type=str, default='saved_model/netG_A2B.pth', help='A2B generator checkpoint file')
+parser.add_argument('--generator_B2A', type=str, default='saved_model/netG_B2A.pth', help='B2A generator checkpoint file')
 
 opt = parser.parse_args()
 print('the opt is', opt)
@@ -30,8 +30,8 @@ if opt.cuda:
     netG_B2A.cuda()
 
 # Load state dicts
-netG_A2B.load_state_dict(torch.load(opt.generator_A2B))
-netG_B2A.load_state_dict(torch.load(opt.generator_B2A))
+netG_A2B.load_state_dict(torch.load(opt.generator_A2B, torch.device('cpu')), strict=False)
+netG_B2A.load_state_dict(torch.load(opt.generator_B2A, torch.device('cpu')), strict=False)
 
 # Set model's test mode
 netG_A2B.eval()
@@ -39,8 +39,8 @@ netG_B2A.eval()
 
 # Inputs & targets memory allocation
 Tensor = torch.cuda.FloatTensor if opt.cuda else torch.Tensor
-input_A = Tensor(opt.batchSize, opt.input_nc, opt.size, opt.size)
-input_B = Tensor(opt.batchSize, opt.output_nc, opt.size, opt.size)
+input_A = Tensor(opt.batch_size, opt.input_nc, opt.size, opt.size)
+input_B = Tensor(opt.batch_size, opt.output_nc, opt.size, opt.size)
 
 # Dataset loader
 transforms_ = [ transforms.ToTensor(),

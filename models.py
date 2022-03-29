@@ -213,7 +213,7 @@ def load_vgg16(model_dir, gpu_ids):
     return vgg
 
 
-# Vgg16 Module 这里直接返回卷积最高层/block4
+# Vgg16 Module 这里直接返回卷积次高层/block4
 class Vgg16(nn.Module):
     def __init__(self):
         super().__init__()

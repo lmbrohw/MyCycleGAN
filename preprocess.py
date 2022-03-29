@@ -149,15 +149,16 @@ class FaceSeg:
 
 
 if __name__ == '__main__':
-    for i in range(1):
+    for i in range(20):
         prefix = random.randint(201, 250)
+        print(prefix)
         image_name = str(prefix) + '.png'
         # image_name = 'WechatIMG2.jpeg'
         img = cv2.cvtColor(cv2.imread(os.path.join('data', image_name)), cv2.COLOR_BGR2RGB)
         # 打印原图出来看看
-        plt.title('img')
-        plt.imshow(img)
-        plt.show()
+        # plt.title('img')
+        # plt.imshow(img)
+        # plt.show()
 
         # 检测人脸+裁剪多余背景
         detector = FaceDetect('cpu', 'dlib')
@@ -178,8 +179,8 @@ if __name__ == '__main__':
         splice = np.dstack((face, mask))
         splice_face = splice[:, :, :3].copy()
         splice_mask = splice[:, :, 3][:, :, np.newaxis].copy() / 255.
-        face_in_white_bg = (splice_face * splice_mask + (1 - splice_mask) * 255).astype(np.uint8)  # 429 429 3 背景变白色
-
+        face_in_white_bg = (splice_face * splice_mask + (1 - splice_mask) * 255).astype(np.uint8)  # 背景变白色
+        face_in_white_bg = cv2.resize(face_in_white_bg, (512, 512))  # convert to 512x512
         # plt.title('face_white_bg')
         # plt.imshow(face_in_white_bg)
         # plt.show()

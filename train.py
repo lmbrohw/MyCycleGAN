@@ -60,7 +60,7 @@ criterion_identity = torch.nn.L1Loss()
 vgg_loss = PerceptualLoss(opt)
 vgg_loss.cuda()
 
-vgg = models.vgg16(pretrained=True)
+# vgg = models.vgg16(pretrained=True)
 vgg = load_vgg16("./pretrained_model", gpu_ids)
 vgg.eval()
 for param in vgg.parameters():
@@ -208,9 +208,9 @@ for epoch in range(opt.epoch, opt.n_epochs):
     lr_scheduler_Attn.step()
 
     # Save models checkpoints
-    torch.save(netG_A2B.state_dict(), 'output/netG_A2B.pth')
-    torch.save(netG_B2A.state_dict(), 'output/netG_B2A.pth')
-    torch.save(netD_A.state_dict(), 'output/netD_A.pth')
-    torch.save(netD_B.state_dict(), 'output/netD_B.pth')
-    torch.save(Attn_A.state_dict(), 'output/Attn_A.pth')
-    torch.save(Attn_B.state_dict(), 'output/Attn_B.pth')
+    torch.save(netG_A2B.state_dict(), 'saved_model/netG_A2B.pth')
+    torch.save(netG_B2A.state_dict(), 'saved_model/netG_B2A.pth')
+    torch.save(netD_A.state_dict(), 'saved_model/netD_A.pth')
+    torch.save(netD_B.state_dict(), 'saved_model/netD_B.pth')
+    torch.save(Attn_A.state_dict(), 'saved_model/Attn_A.pth')
+    torch.save(Attn_B.state_dict(), 'saved_model/Attn_B.pth')
