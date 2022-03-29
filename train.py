@@ -4,6 +4,7 @@ import torch
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
 import torchvision.transforms as transforms
+import torchvision.models as models
 from PIL import Image
 
 from models import *
@@ -58,6 +59,8 @@ criterion_identity = torch.nn.L1Loss()
 # Add VGG loss
 vgg_loss = PerceptualLoss(opt)
 vgg_loss.cuda()
+
+vgg = models.vgg16(pretrained=True)
 vgg = load_vgg16("./pretrained_model", gpu_ids)
 vgg.eval()
 for param in vgg.parameters():
@@ -209,5 +212,5 @@ for epoch in range(opt.epoch, opt.n_epochs):
     torch.save(netG_B2A.state_dict(), 'output/netG_B2A.pth')
     torch.save(netD_A.state_dict(), 'output/netD_A.pth')
     torch.save(netD_B.state_dict(), 'output/netD_B.pth')
-    torch.save(Attn_A.state_dict(), 'output/Attn_A')
-    torch.save(Attn_B.state_dict(), 'output/Attn_B')
+    torch.save(Attn_A.state_dict(), 'output/Attn_A.pth')
+    torch.save(Attn_B.state_dict(), 'output/Attn_B.pth')

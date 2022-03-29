@@ -184,7 +184,7 @@ if __name__ == '__main__':
         # plt.imshow(face_in_white_bg)
         # plt.show()
 
-        cv2.imwrite(os.path.join(os.getcwd(), 'datasets/test/', 'A', image_name),
+        cv2.imwrite(os.path.join(os.getcwd(), 'datasets/train/', 'A', image_name),
                     cv2.cvtColor(face_in_white_bg, cv2.COLOR_RGB2BGR))
 
 # Thanks to dataset provider:Copyright(c) 2018, seeprettyface.com, BUPT_GWY contributes the dataset.
