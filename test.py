@@ -13,7 +13,7 @@ parser.add_argument('--input_nc', type=int, default=3, help='input image channel
 parser.add_argument('--output_nc', type=int, default=3, help='output image channels: 3 for RGB and 1 for grayscale')
 parser.add_argument('--batch_size', type=int, default=1, help='input batch size')
 parser.add_argument('--dataroot', type=str, default='datasets/', help='root directory of the dataset')
-parser.add_argument('--size', type=int, default=512, help='size of the photo')
+parser.add_argument('--size', type=int, default=256, help='size of the photo')
 parser.add_argument('--n_cpu', type=int, default=0, help='number of cpu threads to use during batch generation')
 parser.add_argument('--cuda', action='store_true', help='use GPU')
 parser.add_argument('--generator_A2B', type=str, default='saved_model/netG_A2B.pth', help='A2B generator checkpoint file')

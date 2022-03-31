@@ -47,6 +47,19 @@ class FaceDetect:
     def rotate_image(self, image, landmarks):
         left_eye_corner = landmarks[36]
         right_eye_corner = landmarks[45]
+        # 中间展示
+        image_copy = image.copy()
+        # 眼睛绘制两点
+        x = [left_eye_corner[0],right_eye_corner[0]]
+        y = [left_eye_corner[1],right_eye_corner[1]]
+        plt.plot(x, y, color='r')
+        plt.scatter(x, y, color='b',s=10)
+        for i in range(landmarks.shape[0]):
+            pt_position = (int(landmarks[i][0]), int(landmarks[i][1]))
+            cv2.circle(image_copy, pt_position, 3, (0, 0, 255), -1)
+        plt.imshow(image_copy)
+        plt.title('face_eyes')
+        plt.show()
 
         radian = np.arctan((left_eye_corner[1] - right_eye_corner[1]) / (left_eye_corner[0] - right_eye_corner[0]))
 
@@ -68,6 +81,21 @@ class FaceDetect:
         # 旋转后的关键点坐标
         landmarks = np.concatenate([landmarks, np.ones((landmarks.shape[0], 1))], axis=1)
         landmarks_rotate = np.dot(M, landmarks.T).T
+        # 中间展示
+        left_eye_corner = landmarks_rotate[36]  # 左眼的坐标[361,383]
+        right_eye_corner = landmarks_rotate[45]  # 右眼的坐标[488,376]
+        image_rotate_copy = image_rotate.copy()
+        # 绘制两点
+        x = [left_eye_corner[0], right_eye_corner[0]]
+        y = [left_eye_corner[1], right_eye_corner[1]]
+        plt.plot(x, y, color='r')
+        plt.scatter(x, y, color='b', s=10)
+        for i in range(landmarks_rotate.shape[0]):
+            pt_position = (int(landmarks_rotate[i][0]), int(landmarks_rotate[i][1]))
+            cv2.circle(image_rotate_copy, pt_position, 3, (0, 0, 255), -1)
+        plt.imshow(image_rotate_copy)
+        plt.title('image_rotate')
+        plt.show()
 
         return image_rotate, landmarks_rotate
 
@@ -77,6 +105,24 @@ class FaceDetect:
         landmarks_bottom = np.max(landmarks[:, 1])
         landmarks_left = np.min(landmarks[:, 0])
         landmarks_right = np.max(landmarks[:, 0])
+
+        # 中间展示
+        landmarks_top_index = landmarks[:, 1].tolist().index(landmarks_top)
+        landmarks_bottom_index = landmarks[:, 1].tolist().index(landmarks_bottom)
+        landmarks_left_index = landmarks[:, 0].tolist().index(landmarks_left)
+        landmarks_right_index = landmarks[:, 0].tolist().index(landmarks_right)
+
+        image_copy = image.copy()
+        mark_list = [landmarks_top_index, landmarks_bottom_index, landmarks_left_index, landmarks_right_index]
+        for i in range(landmarks.shape[0]):
+            pt_position = (int(landmarks[i][0]), int(landmarks[i][1]))
+            cv2.circle(image_copy, pt_position, 8, (0, 0, 255), -1)
+        for index in mark_list:
+            pt_position = (int(landmarks[index][0]), int(landmarks[index][1]))
+            cv2.circle(image_copy, pt_position, 8, (255, 0, 0), -1)
+        plt.imshow(image_copy)
+        plt.title('face_top_bottom_left_right')
+        plt.show()
 
         top = int(landmarks_top - 0.8 * (landmarks_bottom - landmarks_top))
         bottom = int(landmarks_bottom + 0.3 * (landmarks_bottom - landmarks_top))
@@ -103,8 +149,19 @@ class FaceDetect:
         bottom = min(bottom, h - 1)
         bottom_white = top_white + (bottom - top)
 
+        # 中间展示
+        cv2.rectangle(image_copy, (left + 8, top + 8), (right - 8, bottom - 8), (0, 255, 0), 8)
+        plt.imshow(image_copy)
+        plt.title('face_rectangle')
+        plt.show()
+
         image_crop[top_white:bottom_white + 1, left_white:right_white + 1] = image[top:bottom + 1,
                                                                              left:right + 1].copy()
+
+        # 中间展示
+        plt.title('image_crop')
+        plt.imshow(image_crop)
+        plt.show()
 
         return image_crop
 
@@ -149,12 +206,13 @@ class FaceSeg:
 
 
 if __name__ == '__main__':
-    for i in range(20):
-        prefix = random.randint(201, 250)
-        print(prefix)
-        image_name = str(prefix) + '.png'
+    for i in range(2000, 2216):
+        # prefix = random.randint(1601, 2000)
+        # print(prefix)
+        print(i)
+        image_name = str(i) + '.png'
         # image_name = 'WechatIMG2.jpeg'
-        img = cv2.cvtColor(cv2.imread(os.path.join('data', image_name)), cv2.COLOR_BGR2RGB)
+        img = cv2.cvtColor(cv2.imread(os.path.join('/Users/mac/Downloads/generated_yellow-stylegan2', image_name)), cv2.COLOR_BGR2RGB)
         # 打印原图出来看看
         # plt.title('img')
         # plt.imshow(img)
@@ -180,7 +238,7 @@ if __name__ == '__main__':
         splice_face = splice[:, :, :3].copy()
         splice_mask = splice[:, :, 3][:, :, np.newaxis].copy() / 255.
         face_in_white_bg = (splice_face * splice_mask + (1 - splice_mask) * 255).astype(np.uint8)  # 背景变白色
-        face_in_white_bg = cv2.resize(face_in_white_bg, (512, 512))  # convert to 512x512
+        face_in_white_bg = cv2.resize(face_in_white_bg, (256, 256))  # convert to 512x512
         # plt.title('face_white_bg')
         # plt.imshow(face_in_white_bg)
         # plt.show()
