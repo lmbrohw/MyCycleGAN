@@ -58,7 +58,7 @@ cycle_loss = torch.nn.L1Loss()
 identity_loss = torch.nn.L1Loss()
 # Add VGG loss
 vgg_loss = PerceptualLoss()
-# vgg_loss.cuda()
+vgg_loss.cuda()
 
 # vgg = models.vgg16(pretrained=True)
 gpu_ids = 0
@@ -87,11 +87,12 @@ lr_scheduler_D_B = torch.optim.lr_scheduler.LambdaLR(optimizer_D_B,
 # lr_scheduler_Attn = torch.optim.lr_scheduler.MultiStepLR(optimizer_Attn, milestones=[30], gamma=0.1, last_epoch=startEpoch -1)
 
 # Dataset loader
-transforms_ = [transforms.Resize(int(opt.size * 1.12), Image.BICUBIC),  # 调整输入图片的大小
-               transforms.RandomCrop(opt.size),  # 随机裁剪
-               transforms.RandomHorizontalFlip(),  # 随机水平翻转
-               transforms.ToTensor(),
-               transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+transforms_ = [
+    # transforms.Resize(int(opt.size * 1.12), Image.BICUBIC),  # 调整输入图片的大小
+    # transforms.RandomCrop(opt.size),  # 随机裁剪
+    transforms.RandomHorizontalFlip(),  # 随机水平翻转
+    transforms.ToTensor(),
+    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
 dataloader = DataLoader(ImageDataset(opt.dataroot, transforms_=transforms_, unaligned=True),
                         batch_size=opt.batch_size, shuffle=True, num_workers=opt.n_cpu)
 

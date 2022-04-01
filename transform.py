@@ -55,7 +55,7 @@ def transform():
     netG_A2B = Generator(3, 3)
     # netG_B2A = Generator(3, 3)
     # Load state dicts
-    netG_A2B.load_state_dict(torch.load('saved_model/netG_A2B.pth', torch.device('cpu')), strict=False)
+    netG_A2B.load_state_dict(torch.load('saved_model/netG_A2B2.pth', torch.device('cpu')), strict=False)
     # netG_B2A.load_state_dict(torch.load(opt.generator_B2A, torch.device('cpu')), strict=False)
 
     # Set model's test mode

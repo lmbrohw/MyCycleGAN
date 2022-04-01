@@ -177,6 +177,8 @@ def vgg_preprocess(batch):
     mean[:, 0, :, :] = 103.939
     mean[:, 1, :, :] = 116.779
     mean[:, 2, :, :] = 123.680
+    mean = mean.to(device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+    batch = batch.to(device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
     batch = batch.sub(Variable(mean))  # subtract mean
     return batch
 
@@ -205,7 +207,8 @@ def load_vgg16(model_dir, gpu_ids=0):
         os.mkdir(model_dir)
 
     vgg = Vgg16()
-    # vgg.cuda(device=gpu_ids[0])
+    # vgg.cuda()
+    vgg.cuda(device=0)
     vgg.load_state_dict(torch.load(os.path.join(model_dir, 'vgg16.weight')), strict=False)
     # vgg = nn.DataParallel(vgg, gpu_ids)  # 多gpu跑
     return vgg
