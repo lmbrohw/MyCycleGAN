@@ -14,7 +14,7 @@ from utils import tensor2image
 from preprocess import *
 
 
-def preprocess():
+def preprocess_cutout():
     img_path = './datasets/test_for_ui/A/original.png'
     img = cv2.cvtColor(cv2.imread(img_path), cv2.COLOR_BGR2RGB)
     # 打印原图出来看看
@@ -47,15 +47,24 @@ def preprocess():
     # plt.imshow(face_in_white_bg)
     # plt.show()
 
-    cv2.imwrite('./datasets/test_for_ui/A/original.png',cv2.cvtColor(face_in_white_bg, cv2.COLOR_RGB2BGR))
-    cv2.imwrite('./output/test_for_ui/img_cutout/cutout.png',cv2.cvtColor(face_in_white_bg, cv2.COLOR_RGB2BGR))
+    cv2.imwrite('./datasets/test_for_ui/A/original.png', cv2.cvtColor(face_in_white_bg, cv2.COLOR_RGB2BGR))
+    cv2.imwrite('./output/test_for_ui/img_cutout/cutout.png', cv2.cvtColor(face_in_white_bg, cv2.COLOR_RGB2BGR))
+
+
+def preprocess_resize():
+    img_path = './datasets/test_for_ui/A/original.png'
+    img = cv2.cvtColor(cv2.imread(img_path), cv2.COLOR_BGR2RGB)
+    img = cv2.resize(img, (256, 256))  # convert to 512x512
+
+    cv2.imwrite('./datasets/test_for_ui/A/original.png', cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+    cv2.imwrite('./output/test_for_ui/img_cutout/resize.png', cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
 
 
 def transform():
     netG_A2B = Generator(3, 3)
     # netG_B2A = Generator(3, 3)
     # Load state dicts
-    netG_A2B.load_state_dict(torch.load('saved_model/netG_A2B2.pth', torch.device('cpu')), strict=False)
+    netG_A2B.load_state_dict(torch.load('saved_model/5_net_G_B.pth', torch.device('cpu')), strict=False)
     # netG_B2A.load_state_dict(torch.load(opt.generator_B2A, torch.device('cpu')), strict=False)
 
     # Set model's test mode

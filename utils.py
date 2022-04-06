@@ -6,9 +6,13 @@ import time
 import numpy as np
 import torch
 import torch.nn as nn
+from torch import save
 from torch.autograd import Variable
 from visdom import Visdom
 
+# import matplotlib
+# matplotlib.use('Agg')
+# from matplotlib import pyplot as plt
 
 # 模型参数初始化（卷积层和BatchNorm2d） 效果会比较好，train中会apply该函数
 def weights_init_normal(model):
@@ -126,3 +130,51 @@ class Logger:
             sys.stdout.write('\n')
         else:
             self.batch += 1
+
+
+def save_checkpoint(state, filename='checkpoint.pth'):
+    save(state, filename)
+
+
+# class Plotter:
+#     def __init__(self, attributes=[('trainloss', 1)]):
+#         self.attributes = attributes
+#
+#         for dictionary in attributes:
+#             attr = dictionary[0]
+#             freq = dictionary[1]
+#             setattr(self, attr, [])
+#             setattr(self, attr + '_freq', freq)
+#
+#     def log(self, attr, value):
+#         getattr(self, attr).append(value)
+#
+#     def savelog(self, filename):
+#         pass
+#
+#     def plot(self, ylabel, attributes=None, ymax=None, filename='plot.png'):
+#
+#         plt.style.use('ggplot')
+#
+#         if ymax is not None:
+#             plt.ylim(ymax=ymax)
+#         plt.xlabel("epoch")
+#         plt.ylabel(ylabel)
+#
+#         # if kwargs is not None:
+#         #     for key, value in kwargs:
+#         #         getattr(plt, key)(value)
+#
+#         if attributes is None:
+#             attributes = [attr[0] for attr in self.attributes]
+#
+#         for attr in attributes:
+#             Xs = getattr(self, attr + '_freq') * np.arange(1, len(getattr(self, attr)) + 1)
+#             Ys = getattr(self, attr)
+#             # print(Xs)
+#             # print(Ys)
+#             plt.plot(Xs, Ys, label=attr)
+#
+#         plt.legend()
+#         plt.savefig(filename)
+#         plt.close()
