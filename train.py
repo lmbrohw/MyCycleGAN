@@ -83,9 +83,11 @@ lr_scheduler_G_A2B = torch.optim.lr_scheduler.LambdaLR(optimizer_G, lr_lambda=La
 # lr_scheduler_G_B2A = torch.optim.lr_scheduler.LambdaLR(optimizer_G, lr_lambda=LambdaLR(opt.n_epochs, opt.start_epoch,
 #                                                                                        opt.decay_epoch).step)
 lr_scheduler_D_A = torch.optim.lr_scheduler.LambdaLR(optimizer_D_A,
-                                                     lr_lambda=LambdaLR(opt.n_epochs, opt.epoch, opt.decay_epoch).step)
+                                                     lr_lambda=LambdaLR(opt.n_epochs, opt.start_epoch,
+                                                                        opt.decay_epoch).step)
 lr_scheduler_D_B = torch.optim.lr_scheduler.LambdaLR(optimizer_D_B,
-                                                     lr_lambda=LambdaLR(opt.n_epochs, opt.epoch, opt.decay_epoch).step)
+                                                     lr_lambda=LambdaLR(opt.n_epochs, opt.start_epoch,
+                                                                        opt.decay_epoch).step)
 # lr_scheduler_Attn = torch.optim.lr_scheduler.LambdaLR(optimizer_Attn,
 #                                                       lr_lambda=LambdaLR(opt.n_epochs, opt.epoch, opt.decay_epoch).step)
 # lr_scheduler_Attn = torch.optim.lr_scheduler.MultiStepLR(optimizer_Attn, milestones=[30], gamma=0.1, last_epoch=startEpoch -1)
@@ -104,8 +106,8 @@ dataloader = DataLoader(ImageDataset(opt.dataroot, transforms_=transforms_, unal
 Tensor = torch.cuda.FloatTensor if opt.cuda else torch.Tensor
 input_A = Tensor(opt.batch_size, opt.input_nc, opt.size, opt.size)
 input_B = Tensor(opt.batch_size, opt.output_nc, opt.size, opt.size)
-target_real = Variable(Tensor(opt.batch_size).fill_(1.0))  # 用于loss_GAN, 即(target_real, D(G(A)))
-target_fake = Variable(Tensor(opt.batch_size).fill_(0.0))  # 用于loss_GAN, 即(target_real, D(G(A)))
+target_real = Tensor(opt.batch_size).fill_(1.0)  # 用于loss_GAN, 即(target_real, D(G(A)))
+target_fake = Tensor(opt.batch_size).fill_(0.0)  # 用于loss_GAN, 即(target_real, D(G(A)))
 
 # 缓冲池
 fake_A_buffer = ReplayBuffer()
@@ -141,12 +143,12 @@ if opt.resume is not 'None':
     optimizer_D_B.load_state_dict(checkpoint['optD_B'])
 
     # plotter = checkpoint['plotter']
-    print('resumed from epoch ', start_epoch)
+    print('resumed from epoch ', start_epoch - 1)
     del (checkpoint)
 
 # Training
 
-for epoch in range(start_epoch, opt.n_epochs):
+for epoch in range(opt.start_epoch, opt.n_epochs):
     for i, batch in enumerate(dataloader):
         # set model input
         real_A = Variable(input_A.copy_(batch['A']))
@@ -186,9 +188,9 @@ for epoch in range(start_epoch, opt.n_epochs):
         # loss_feature_A2B = func(real_A, fake_B)
         # loss_feature_B2A = func(real_B, fake_A)
 
-        # Total loss 这里csdn上加了权重
+        # Total loss 这里加上权重
         loss_G = 5.0 * loss_identity_A + 5.0 * loss_identity_B + loss_GAN_A2B + loss_GAN_B2A + 10.0 * loss_cycle_ABA + \
-                 10.0 * loss_cycle_BAB + 4.0 * loss_vgg_A2B + 4.0 * loss_vgg_B2A
+                 10.0 * loss_cycle_BAB + 0.5 * loss_vgg_A2B + 0.5 * loss_vgg_B2A
 
         # 参数更新
         loss_G.backward()

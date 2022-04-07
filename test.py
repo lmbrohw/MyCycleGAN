@@ -16,8 +16,10 @@ parser.add_argument('--dataroot', type=str, default='datasets/', help='root dire
 parser.add_argument('--size', type=int, default=256, help='size of the photo')
 parser.add_argument('--n_cpu', type=int, default=0, help='number of cpu threads to use during batch generation')
 parser.add_argument('--cuda', action='store_true', help='use GPU')
-parser.add_argument('--generator_A2B', type=str, default='saved_model/20_net_G_A.pth', help='A2B generator checkpoint file')
-parser.add_argument('--generator_B2A', type=str, default='saved_model/20_net_G_B.pth', help='B2A generator checkpoint file')
+parser.add_argument('--generator_A2B', type=str, default='saved_model/20_net_G_A.pth',
+                    help='A2B generator checkpoint file')
+parser.add_argument('--generator_B2A', type=str, default='saved_model/20_net_G_B.pth',
+                    help='B2A generator checkpoint file')
 
 opt = parser.parse_args()
 print('the opt is', opt)
@@ -43,8 +45,8 @@ input_A = Tensor(opt.batch_size, opt.input_nc, opt.size, opt.size)
 input_B = Tensor(opt.batch_size, opt.output_nc, opt.size, opt.size)
 
 # Dataset loader
-transforms_ = [ transforms.ToTensor(),
-                transforms.Normalize((0.5,0.5,0.5), (0.5,0.5,0.5)) ]
+transforms_ = [transforms.ToTensor(),
+               transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
 dataloader = DataLoader(ImageDataset(opt.dataroot, transforms_=transforms_, mode='test'),
                         batch_size=opt.batch_size, shuffle=False, num_workers=opt.n_cpu)
 
@@ -54,11 +56,11 @@ for i, batch in enumerate(dataloader):
     real_B = Variable(input_B.copy_(batch['B']))
 
     # Generate output
-    fake_B = 0.5*(netG_A2B(real_A).data + 1.0)
-    fake_A = 0.5*(netG_B2A(real_B).data + 1.0)
+    fake_B = 0.5 * (netG_A2B(real_A).data + 1.0)
+    fake_A = 0.5 * (netG_B2A(real_B).data + 1.0)
 
     # Save image files
-    save_image(fake_A, 'output/A/%04d.png' % (i+1))
-    save_image(fake_B, 'output/B/%04d.png' % (i+1))
+    save_image(fake_A, 'output/A/%04d.png' % (i + 1))
+    save_image(fake_B, 'output/B/%04d.png' % (i + 1))
 
-    sys.stdout.write('\rGenerated images %04d of %04d' % (i+1, len(dataloader)))
+    sys.stdout.write('\rGenerated images %04d of %04d' % (i + 1, len(dataloader)))
