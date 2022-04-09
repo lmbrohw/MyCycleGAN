@@ -2,6 +2,7 @@ import sys
 
 import cv2
 import torchvision.transforms as transforms
+from PIL import Image
 from matplotlib import pyplot as plt
 from torchvision.utils import save_image
 from torch.utils.data import DataLoader
@@ -64,7 +65,7 @@ def transform():
     netG_A2B = Generator(3, 3)
     # netG_B2A = Generator(3, 3)
     # Load state dicts
-    netG_A2B.load_state_dict(torch.load('saved_model/5_net_G_B.pth', torch.device('cpu')), strict=False)
+    netG_A2B.load_state_dict(torch.load('saved_model/netG_A2B_110epoch.pth', torch.device('cpu')), strict=False)
     # netG_B2A.load_state_dict(torch.load(opt.generator_B2A, torch.device('cpu')), strict=False)
 
     # Set model's test mode
@@ -77,8 +78,9 @@ def transform():
     # input_B = Tensor(1, 3, 256, 256)
 
     # Dataset loader
-    transforms_ = [transforms.ToTensor(),
-                   transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+    transforms_ = [
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
     dataloader = DataLoader(ImageDataset('datasets/', transforms_=transforms_, mode='test_for_ui'),
                             batch_size=1, shuffle=False, num_workers=0)
 

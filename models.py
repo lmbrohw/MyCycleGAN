@@ -23,7 +23,7 @@ class ResidualBlock(nn.Module):
         self.model = nn.Sequential(*conv_block)
 
     def forward(self, x):
-        return x + self.model(x)
+        return x + self.model(x)  # add skip connections
 
 
 class Generator(nn.Module):
@@ -38,7 +38,7 @@ class Generator(nn.Module):
             nn.ReLU(inplace=True)
         ]
 
-        # 编码
+        # 下采样层
         model += [
             nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1),
             nn.InstanceNorm2d(128),
@@ -54,7 +54,7 @@ class Generator(nn.Module):
         for _ in range(n_residual_blocks):
             model += [ResidualBlock(256)]
 
-        # 解码
+        # 上采样层
         model += [
             nn.ConvTranspose2d(256, 128, kernel_size=3, stride=2, padding=1, output_padding=1),
             nn.InstanceNorm2d(128),
@@ -88,7 +88,7 @@ class Discriminator(nn.Module):
             nn.Conv2d(in_channels, 64, kernel_size=4, stride=2, padding=1),
             nn.LeakyReLU(0.2, inplace=True)
         ]
-
+        # 逐渐增加filter数量
         model += [
             nn.Conv2d(64, 128, kernel_size=4, stride=2, padding=1),
             nn.InstanceNorm2d(128),

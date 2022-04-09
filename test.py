@@ -16,9 +16,9 @@ parser.add_argument('--dataroot', type=str, default='datasets/', help='root dire
 parser.add_argument('--size', type=int, default=256, help='size of the photo')
 parser.add_argument('--n_cpu', type=int, default=0, help='number of cpu threads to use during batch generation')
 parser.add_argument('--cuda', action='store_true', help='use GPU')
-parser.add_argument('--generator_A2B', type=str, default='saved_model/20_net_G_A.pth',
+parser.add_argument('--generator_A2B', type=str, default='saved_model/netG_A2B_1000.pth',
                     help='A2B generator checkpoint file')
-parser.add_argument('--generator_B2A', type=str, default='saved_model/20_net_G_B.pth',
+parser.add_argument('--generator_B2A', type=str, default='saved_model/netG_B2A_1000.pth',
                     help='B2A generator checkpoint file')
 
 opt = parser.parse_args()
