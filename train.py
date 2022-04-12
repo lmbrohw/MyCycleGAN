@@ -2,10 +2,7 @@ import argparse
 import itertools
 import torch
 from torch.utils.data import DataLoader
-from torch.autograd import Variable
 import torchvision.transforms as transforms
-import torchvision.models as models
-from PIL import Image
 
 from models import *
 # from preprocess import *
@@ -59,10 +56,10 @@ netD_B.apply(weights_init_normal)
 GAN_loss = torch.nn.MSELoss()
 cycle_loss = torch.nn.L1Loss()
 identity_loss = torch.nn.L1Loss()
-# Add VGG loss
-vgg_loss = PerceptualLoss()
+vgg_loss = PerceptualLoss()  # Add VGG loss
 vgg_loss.cuda()
 
+# 从 pretrained_model 中加载Vgg16模型
 # vgg = models.vgg16(pretrained=True)
 gpu_ids = 0
 vgg = load_vgg16("./pretrained_model", gpu_ids)
@@ -73,36 +70,38 @@ for param in vgg.parameters():
 # Optimizers and LR schedulers
 optimizer_G = torch.optim.Adam(itertools.chain(netG_A2B.parameters(), netG_B2A.parameters()), lr=opt.lr,
                                betas=(0.5, 0.999))
+# optimizer_G_A2B = torch.optim.Adam(netG_A2B.parameters(), lr=opt.lr, betas=(0.5, 0.999))
 # optimizer_G_B2A = torch.optim.Adam(netG_B2A.parameters(), lr=opt.lr, betas=(0.5, 0.999))
 optimizer_D_A = torch.optim.Adam(netD_A.parameters(), lr=opt.lr, betas=(0.5, 0.999))
 optimizer_D_B = torch.optim.Adam(netD_B.parameters(), lr=opt.lr, betas=(0.5, 0.999))
 # optimizer_Attn = torch.optim.Adam(itertools.chain(Attn_A.parameters(), Attn_B.parameters()), lr=1e-5)
+
 # 这里会使用到utils中定义的学习率衰减更新函数LambdaLR()
-lr_scheduler_G_A2B = torch.optim.lr_scheduler.LambdaLR(optimizer_G, lr_lambda=LambdaLR(opt.n_epochs, opt.start_epoch,
-                                                                                       opt.decay_epoch).step)
-# lr_scheduler_G_B2A = torch.optim.lr_scheduler.LambdaLR(optimizer_G, lr_lambda=LambdaLR(opt.n_epochs, opt.start_epoch,
-#                                                                                        opt.decay_epoch).step)
+lr_scheduler_G = torch.optim.lr_scheduler.LambdaLR(optimizer_G, lr_lambda=LambdaLR(opt.n_epochs, opt.start_epoch,
+                                                                                   opt.decay_epoch).step)
+
+# lr_scheduler_G_A2B = torch.optim.lr_scheduler.LambdaLR(optimizer_G_A2B, lr_lambda=LambdaLR(opt.n_epochs, opt.start_epoch, opt.decay_epoch).step)
+# lr_scheduler_G_B2A = torch.optim.lr_scheduler.LambdaLR(optimizer_G_B2A, lr_lambda=LambdaLR(opt.n_epochs, opt.start_epoch, opt.decay_epoch).step)
+
 lr_scheduler_D_A = torch.optim.lr_scheduler.LambdaLR(optimizer_D_A,
                                                      lr_lambda=LambdaLR(opt.n_epochs, opt.start_epoch,
                                                                         opt.decay_epoch).step)
 lr_scheduler_D_B = torch.optim.lr_scheduler.LambdaLR(optimizer_D_B,
                                                      lr_lambda=LambdaLR(opt.n_epochs, opt.start_epoch,
                                                                         opt.decay_epoch).step)
-# lr_scheduler_Attn = torch.optim.lr_scheduler.LambdaLR(optimizer_Attn,
-#                                                       lr_lambda=LambdaLR(opt.n_epochs, opt.epoch, opt.decay_epoch).step)
+
+# lr_scheduler_Attn = torch.optim.lr_scheduler.LambdaLR(optimizer_Attn, lr_lambda=LambdaLR(opt.n_epochs, opt.epoch, opt.decay_epoch).step)
 # lr_scheduler_Attn = torch.optim.lr_scheduler.MultiStepLR(optimizer_Attn, milestones=[30], gamma=0.1, last_epoch=startEpoch -1)
 
 # Dataset loader
 transforms_ = [
-    # transforms.Resize(int(opt.size * 1.12), Image.BICUBIC),  # 调整输入图片的大小
-    # transforms.RandomCrop(opt.size),  # 随机裁剪
     transforms.RandomHorizontalFlip(),  # 随机水平翻转
     transforms.ToTensor(),
     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
 dataloader = DataLoader(ImageDataset(opt.dataroot, transforms_=transforms_, unaligned=True),
                         batch_size=opt.batch_size, shuffle=True, num_workers=opt.n_cpu)
 
-# 若出错则替换成CycleGAN_practice
+# input_A, input_B, target_real, target_fake
 Tensor = torch.cuda.FloatTensor if opt.cuda else torch.Tensor
 input_A = Tensor(opt.batch_size, opt.input_nc, opt.size, opt.size)
 input_B = Tensor(opt.batch_size, opt.output_nc, opt.size, opt.size)
@@ -114,19 +113,10 @@ fake_A_buffer = ReplayBuffer()
 fake_B_buffer = ReplayBuffer()
 
 # Loss plot
-# logger = Logger(opt.n_epochs, len(dataloader))
-
-# attributes = [('loss_GAN_A2B', 1),
-#               ('loss_GAN_B2A', 1),
-#               ('loss_cycle_ABA', 1),
-#               ('loss_cycle_BAB', 1),
-#               ('loss_D_A', 1),
-#               ('loss_D_B', 1)
-#               ]
-# # Custom Plotter module
-# plotter = Plotter(attributes)
+logger = Logger(opt.n_epochs, len(dataloader))
 
 # 从checkpoint中加载模型参数，恢复训练
+
 start_epoch = 0
 plotEvery = 1
 
@@ -142,7 +132,6 @@ if opt.resume is not 'None':
     optimizer_D_A.load_state_dict(checkpoint['optD_A'])
     optimizer_D_B.load_state_dict(checkpoint['optD_B'])
 
-    # plotter = checkpoint['plotter']
     print('resumed from epoch ', start_epoch - 1)
     del (checkpoint)
 
@@ -157,6 +146,7 @@ for epoch in range(opt.start_epoch, opt.n_epochs):
         # Generators A2B and B2A
 
         optimizer_G.zero_grad()
+        # optimizer_G_A2B.zero_grad()
         # optimizer_G_B2A.zero_grad()
         # optimizer_Attn.zero_grad()
 
@@ -188,13 +178,14 @@ for epoch in range(opt.start_epoch, opt.n_epochs):
         # loss_feature_A2B = func(real_A, fake_B)
         # loss_feature_B2A = func(real_B, fake_A)
 
-        # Total loss 这里加上权重
+        # Total loss 在这里加上权重
         loss_G = 5.0 * loss_identity_A + 5.0 * loss_identity_B + loss_GAN_A2B + loss_GAN_B2A + 10.0 * loss_cycle_ABA + \
                  10.0 * loss_cycle_BAB + 0.5 * loss_vgg_A2B + 0.5 * loss_vgg_B2A
 
         # 参数更新
         loss_G.backward()
         optimizer_G.step()
+        # optimizer_G_A2B.step()
         # optimizer_G_B2A.step()
         # optimizer_Attn.step()
 
@@ -239,52 +230,31 @@ for epoch in range(opt.start_epoch, opt.n_epochs):
         optimizer_D_B.step()
 
         sys.stdout.write('\repoch %03d/%03d (%04d/%04d)' % (epoch, opt.n_epochs, i, len(dataloader)))
-        # print('epoch %03d/%03d (%04d/%04d)' % (epoch, opt.n_epochs, i, len(dataloader)))
 
-        # Progress report (http://localhost:8097)
-        # logger.log({'loss_G': loss_G,
-        #             'loss_G_identity': (loss_identity_A + loss_identity_B),
-        #             'loss_G_GAN': (loss_GAN_A2B + loss_GAN_B2A),
-        #             'loss_G_cycle': (loss_cycle_ABA + loss_cycle_BAB),
-        #             'loss_D': (loss_D_A + loss_D_B),
-        #             'loss_vgg': (loss_vgg_A2B + loss_vgg_B2A)},
-        #            images={'real_A': real_A, 'real_B': real_B, 'fake_A': fake_A, 'fake_B': fake_B})
+        logger.log({'loss_G': loss_G,
+                    'loss_G_identity': (loss_identity_A + loss_identity_B),
+                    'loss_G_GAN': (loss_GAN_A2B + loss_GAN_B2A),
+                    'loss_G_cycle': (loss_cycle_ABA + loss_cycle_BAB),
+                    'loss_D': (loss_D_A + loss_D_B),
+                    'loss_vgg': (loss_vgg_A2B + loss_vgg_B2A)},
+                   images={'real_A': real_A, 'real_B': real_B, 'fake_A': fake_A, 'fake_B': fake_B, 'rec_A': recovered_A,
+                           'rec_B': recovered_B})
 
-    # Update learning rate
-    lr_scheduler_G_A2B.step()
+    # 更新学习率
+    lr_scheduler_G.step()
+    # lr_scheduler_G_A2B.step()
     # lr_scheduler_G_B2A.step()
     lr_scheduler_D_A.step()
     lr_scheduler_D_B.step()
     # lr_scheduler_Attn.step()
 
-    # Save models checkpoints
-    # torch.save(netG_A2B.state_dict(), 'saved_model/netG_A2B.pth')
-    # torch.save(netG_B2A.state_dict(), 'saved_model/netG_B2A.pth')
-    # torch.save(netD_A.state_dict(), 'saved_model/netD_A.pth')
-    # torch.save(netD_B.state_dict(), 'saved_model/netD_B.pth')
-
-    # torch.save(Attn_A.state_dict(), 'saved_model/Attn_A.pth')
-    # torch.save(Attn_B.state_dict(), 'saved_model/Attn_B.pth')
-
-    # plotter.log('AdvLossA', countAdvLossA / (i + 1))
-    # plotter.log('AdvLossB', countAdvLossB / (i + 1))
-    # plotter.log('LossCycleA', countLossCycleA / (i + 1))
-    # plotter.log('LossCycleB', countLossCycleB / (i + 1))
-    # plotter.log('DisLossA', countDisLossA / (i + 1))
-    # plotter.log('DisLossB', countDisLossB / (i + 1))
-
-    # if (epoch + 1) % plotEvery == 0:
-    #     plotter.plot('AdvLosses', ['AdvLossA', 'AdvLossB'], filename='AdvLosses.png')
-    #     plotter.plot('CycleLosses', ['LossCycleA', 'LossCycleB'], filename='CycleLosses.png', ymax=1.0)
-    #     plotter.plot('DisLosses', ['DisLossA', 'DisLossB'], filename='DisLosses.png')
-
+    # 保存模型参数 checkpoint
     if epoch % opt.save_every == 0:
         save_checkpoint({
             'epoch': epoch + 1,
             'optG': optimizer_G.state_dict(),
             'optD_A': optimizer_D_A.state_dict(),
             'optD_B': optimizer_D_B.state_dict(),
-            # 'plotter': plotter,
             'genA2B': netG_A2B.state_dict(),
             'genB2A': netG_B2A.state_dict(),
             'disA': netD_A.state_dict(),
@@ -292,7 +262,8 @@ for epoch in range(opt.start_epoch, opt.n_epochs):
         },
             filename='checkpoint/checkpoint_' + str(epoch) + '.pth'
         )
-
+    # 保存完整的生成器 判别器
+    if epoch % 10 == 0:
         torch.save(netG_A2B.state_dict(), 'saved_model/netG_A2B.pth')
         torch.save(netG_B2A.state_dict(), 'saved_model/netG_B2A.pth')
         torch.save(netD_A.state_dict(), 'saved_model/netD_A.pth')

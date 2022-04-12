@@ -1,15 +1,9 @@
-import sys
-
-import cv2
 import torchvision.transforms as transforms
-from PIL import Image
-from matplotlib import pyplot as plt
 from torchvision.utils import save_image
 from torch.utils.data import DataLoader
 
 from dataset import ImageDataset
 from models import *
-import shutil
 
 from utils import tensor2image
 from preprocess import *
@@ -55,7 +49,7 @@ def preprocess_cutout():
 def preprocess_resize():
     img_path = './datasets/test_for_ui/A/original.png'
     img = cv2.cvtColor(cv2.imread(img_path), cv2.COLOR_BGR2RGB)
-    img = cv2.resize(img, (256, 256))  # convert to 512x512
+    img = cv2.resize(img, (256, 256))  # convert to 256x256
 
     cv2.imwrite('./datasets/test_for_ui/A/original.png', cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
     cv2.imwrite('./output/test_for_ui/img_cutout/resize.png', cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
@@ -65,7 +59,7 @@ def transform():
     netG_A2B = Generator(3, 3)
     # netG_B2A = Generator(3, 3)
     # Load state dicts
-    netG_A2B.load_state_dict(torch.load('saved_model/netG_A2B_110epoch.pth', torch.device('cpu')), strict=False)
+    netG_A2B.load_state_dict(torch.load('saved_model/netG_A2B_95.pth', torch.device('cpu')), strict=False)
     # netG_B2A.load_state_dict(torch.load(opt.generator_B2A, torch.device('cpu')), strict=False)
 
     # Set model's test mode

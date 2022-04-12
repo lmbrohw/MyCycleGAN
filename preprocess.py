@@ -14,7 +14,7 @@ class FaceDetect:
     def __init__(self, device, detector):
         self.fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, device=device, face_detector=detector)
 
-    #
+    # 矫正人脸
     def align(self, image):
         landmarks = self.get_face_landmarks(image)
 
@@ -25,7 +25,7 @@ class FaceDetect:
 
     # 找到检测关键点
     def get_face_landmarks(self, image):
-        preds = self.fa.get_landmarks(image)
+        preds = self.fa.get_landmarks_from_image(image)
 
         if preds is None:
             return None
@@ -61,6 +61,7 @@ class FaceDetect:
         plt.title('face_eyes')
         plt.show()
 
+        # 两y轴高度差/两眼x轴距离差
         radian = np.arctan((left_eye_corner[1] - right_eye_corner[1]) / (left_eye_corner[0] - right_eye_corner[0]))
 
         height, width, depth = image.shape
@@ -82,8 +83,6 @@ class FaceDetect:
         landmarks = np.concatenate([landmarks, np.ones((landmarks.shape[0], 1))], axis=1)
         landmarks_rotate = np.dot(M, landmarks.T).T
         # 中间展示
-        left_eye_corner = landmarks_rotate[36]  # 左眼的坐标[361,383]
-        right_eye_corner = landmarks_rotate[45]  # 右眼的坐标[488,376]
         image_rotate_copy = image_rotate.copy()
         # 绘制两点
         x = [left_eye_corner[0], right_eye_corner[0]]
@@ -107,6 +106,7 @@ class FaceDetect:
         landmarks_right = np.max(landmarks[:, 0])
 
         # 中间展示
+        # 找出这几个值的索引
         landmarks_top_index = landmarks[:, 1].tolist().index(landmarks_top)
         landmarks_bottom_index = landmarks[:, 1].tolist().index(landmarks_bottom)
         landmarks_left_index = landmarks[:, 0].tolist().index(landmarks_left)
@@ -123,7 +123,7 @@ class FaceDetect:
         plt.imshow(image_copy)
         plt.title('face_top_bottom_left_right')
         plt.show()
-
+        # 裁剪
         top = int(landmarks_top - 0.8 * (landmarks_bottom - landmarks_top))
         bottom = int(landmarks_bottom + 0.3 * (landmarks_bottom - landmarks_top))
         left = int(landmarks_left - 0.3 * (landmarks_right - landmarks_left))
@@ -136,7 +136,7 @@ class FaceDetect:
             top -= ((right - left) - (bottom - top)) // 2
             bottom = top + (right - left)
 
-        # 初始化图片大小
+        # 初始化白色背景图大小
         image_crop = np.ones((bottom - top + 1, right - left + 1, 3), np.uint8) * 255
 
         h, w = image.shape[:2]
@@ -170,7 +170,7 @@ curPath = os.path.abspath(os.path.dirname(__file__))
 
 
 class FaceSeg:
-    def __init__(self, model_path=os.path.join(curPath, 'seg_model_384.pb')):
+    def __init__(self, model_path=os.path.join(curPath, 'pretrained_model/seg_model_384.pb')):
         config = tf.compat.v1.ConfigProto()
         config.gpu_options.allow_growth = True
         self._graph = tf.Graph()
@@ -206,11 +206,11 @@ class FaceSeg:
 
 
 if __name__ == '__main__':
-    for i in range(2216):
+    for i in range(24):
         # prefix = random.randint(1601, 2000)
         # print(prefix)
         # print(i)
-        image_name = str(i) + '.png'
+        image_name = str(i + 4100) + '.png'
         # image_name = 'WechatIMG2.jpeg'
         img = cv2.cvtColor(cv2.imread(os.path.join('/Users/mac/Downloads/generated_yellow-stylegan2', image_name)),
                            cv2.COLOR_BGR2RGB)
@@ -245,7 +245,7 @@ if __name__ == '__main__':
         # plt.imshow(face_in_white_bg)
         # plt.show()
 
-        cv2.imwrite(os.path.join(os.getcwd(), 'datasets/train/', 'A', image_name),
+        cv2.imwrite(os.path.join(os.getcwd(), 'datasets/test/', 'A', image_name),
                     cv2.cvtColor(face_in_white_bg, cv2.COLOR_RGB2BGR))
 
 

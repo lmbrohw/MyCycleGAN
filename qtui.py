@@ -11,39 +11,39 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
-class Ui_Dialog(object):
-    def setupUi(self, Dialog):
-        Dialog.setObjectName("Dialog")
-        Dialog.resize(1079, 661)
-        self.btn_open = QtWidgets.QPushButton(Dialog)
-        self.btn_open.setGeometry(QtCore.QRect(350, 590, 81, 26))
+class Ui_photo2cartoon(object):
+    def setupUi(self, photo2cartoon):
+        photo2cartoon.setObjectName("photo2cartoon")
+        photo2cartoon.resize(842, 530)
+        self.btn_open = QtWidgets.QPushButton(photo2cartoon)
+        self.btn_open.setGeometry(QtCore.QRect(280, 460, 81, 26))
         self.btn_open.setObjectName("btn_open")
-        self.btn_submit = QtWidgets.QPushButton(Dialog)
-        self.btn_submit.setGeometry(QtCore.QRect(600, 590, 81, 26))
+        self.btn_submit = QtWidgets.QPushButton(photo2cartoon)
+        self.btn_submit.setGeometry(QtCore.QRect(470, 460, 81, 26))
         self.btn_submit.setObjectName("btn_submit")
-        self.original_image = QtWidgets.QLabel(Dialog)
-        self.original_image.setGeometry(QtCore.QRect(60, 70, 450, 450))
+        self.original_image = QtWidgets.QLabel(photo2cartoon)
+        self.original_image.setGeometry(QtCore.QRect(50, 70, 300, 300))
         font = QtGui.QFont()
         font.setPointSize(17)
         font.setKerning(True)
         self.original_image.setFont(font)
         self.original_image.setStyleSheet("border:1px solid rgb(0,0,0)")
         self.original_image.setObjectName("original_image")
-        self.cartoon_image = QtWidgets.QLabel(Dialog)
-        self.cartoon_image.setGeometry(QtCore.QRect(560, 70, 450, 450))
+        self.cartoon_image = QtWidgets.QLabel(photo2cartoon)
+        self.cartoon_image.setGeometry(QtCore.QRect(490, 70, 300, 300))
         font = QtGui.QFont()
         font.setPointSize(17)
         self.cartoon_image.setFont(font)
         self.cartoon_image.setStyleSheet("border:1px solid rgb(0,0,0)")
         self.cartoon_image.setObjectName("cartoon_image")
 
-        self.retranslateUi(Dialog)
-        QtCore.QMetaObject.connectSlotsByName(Dialog)
+        self.retranslateUi(photo2cartoon)
+        QtCore.QMetaObject.connectSlotsByName(photo2cartoon)
 
-    def retranslateUi(self, Dialog):
+    def retranslateUi(self, photo2cartoon):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
-        self.btn_open.setText(_translate("Dialog", "选择图片"))
-        self.btn_submit.setText(_translate("Dialog", "转换"))
-        self.original_image.setText(_translate("Dialog", "                                   原始图片"))
-        self.cartoon_image.setText(_translate("Dialog", "                                    动漫图像"))
+        photo2cartoon.setWindowTitle(_translate("photo2cartoon", "photo2cartoon"))
+        self.btn_open.setText(_translate("photo2cartoon", "选择图片"))
+        self.btn_submit.setText(_translate("photo2cartoon", "转换"))
+        self.original_image.setText(_translate("photo2cartoon", "                          原始图像"))
+        self.cartoon_image.setText(_translate("photo2cartoon", "                          动漫图像"))

@@ -117,7 +117,7 @@ class Logger:
                 if loss_name not in self.loss_windows:
                     self.loss_windows[loss_name] = self.viz.line(X=np.array([self.epoch]),
                                                                  Y=np.array([loss / self.batch]),
-                                                                 opts={'xlabel': 'epochs', 'ylabel': loss_name,
+                                                                 opts={'xlabel': 'epoch', 'ylabel': loss_name,
                                                                        'title': loss_name})
                 else:
                     self.viz.line(X=np.array([self.epoch]), Y=np.array([loss / self.batch]),
@@ -134,47 +134,3 @@ class Logger:
 
 def save_checkpoint(state, filename='checkpoint.pth'):
     save(state, filename)
-
-
-# class Plotter:
-#     def __init__(self, attributes=[('trainloss', 1)]):
-#         self.attributes = attributes
-#
-#         for dictionary in attributes:
-#             attr = dictionary[0]
-#             freq = dictionary[1]
-#             setattr(self, attr, [])
-#             setattr(self, attr + '_freq', freq)
-#
-#     def log(self, attr, value):
-#         getattr(self, attr).append(value)
-#
-#     def savelog(self, filename):
-#         pass
-#
-#     def plot(self, ylabel, attributes=None, ymax=None, filename='plot.png'):
-#
-#         plt.style.use('ggplot')
-#
-#         if ymax is not None:
-#             plt.ylim(ymax=ymax)
-#         plt.xlabel("epoch")
-#         plt.ylabel(ylabel)
-#
-#         # if kwargs is not None:
-#         #     for key, value in kwargs:
-#         #         getattr(plt, key)(value)
-#
-#         if attributes is None:
-#             attributes = [attr[0] for attr in self.attributes]
-#
-#         for attr in attributes:
-#             Xs = getattr(self, attr + '_freq') * np.arange(1, len(getattr(self, attr)) + 1)
-#             Ys = getattr(self, attr)
-#             # print(Xs)
-#             # print(Ys)
-#             plt.plot(Xs, Ys, label=attr)
-#
-#         plt.legend()
-#         plt.savefig(filename)
-#         plt.close()

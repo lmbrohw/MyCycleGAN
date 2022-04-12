@@ -86,6 +86,7 @@ if __name__ == '__main__':
     # 选择图片
     btn = Button(window, text="选择图片", command=openImage)
     btn.place(y=500, x=300, width=200, height=40)
+
     # 设置按钮
     btn_set1 = Button(window, text="原模型", command=lambda:transfer(model_name='dataset1'))
     btn_set1.place(y=100, x=40, width=130, height=40)

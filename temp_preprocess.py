@@ -122,7 +122,7 @@ curPath = os.path.abspath(os.path.dirname(__file__))
 
 
 class FaceSeg:
-    def __init__(self, model_path=os.path.join(curPath, 'seg_model_384.pb')):
+    def __init__(self, model_path=os.path.join(curPath, 'pretrained_model/seg_model_384.pb')):
         config = tf.compat.v1.ConfigProto()
         config.gpu_options.allow_growth = True
         self._graph = tf.Graph()

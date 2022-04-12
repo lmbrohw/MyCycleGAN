@@ -4,11 +4,11 @@ import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog
 from PyQt5 import QtGui
 
-from qtui import Ui_Dialog
+from qtui import Ui_photo2cartoon
 from transform import transform, preprocess_cutout, preprocess_resize
 
 
-class MyMainForm(QMainWindow, Ui_Dialog):
+class MyMainForm(QMainWindow, Ui_photo2cartoon):
     def __init__(self, parent=None):
         super(MyMainForm, self).__init__(parent)
         self.setupUi(self)
@@ -26,8 +26,8 @@ class MyMainForm(QMainWindow, Ui_Dialog):
         self.original_image.setPixmap(jpg)
 
     def submit(self):
-        preprocess_cutout()
-        # preprocess_resize()
+        # preprocess_cutout()
+        preprocess_resize()
 
         transform()
         # 直接从 'output/test_for_ui/B/0001.png' 取出转换结果
