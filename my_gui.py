@@ -16,18 +16,19 @@ class MyMainForm(QMainWindow, Ui_photo2cartoon):
         self.btn_submit.clicked.connect(self.submit)
 
     def open_image(self):
-        imgName, imgType = QFileDialog.getOpenFileName(self, "打开图片", "", "*.png;;*.jpg;;All Files(*)")
+        imgName, imgType = QFileDialog.getOpenFileName(self, "打开图片", "", "All Files(*);;*.png;;*.jpg")
 
         shutil.rmtree('./datasets/test_for_ui/A')
         os.mkdir('./datasets/test_for_ui/A')
         shutil.copy(imgName, './datasets/test_for_ui/A/' + 'original.png')
+        print('已处理')
 
         jpg = QtGui.QPixmap(imgName).scaled(self.original_image.width(), self.original_image.height())
         self.original_image.setPixmap(jpg)
 
     def submit(self):
-        # preprocess_cutout()
-        preprocess_resize()
+        preprocess_cutout()
+        # preprocess_resize()
 
         transform()
         # 直接从 'output/test_for_ui/B/0001.png' 取出转换结果

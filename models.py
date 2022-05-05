@@ -30,7 +30,6 @@ class Generator(nn.Module):
     def __init__(self, in_channels=3, out_channels=3, n_residual_blocks=9):  # 默认需要9个残差块
         super().__init__()
 
-        # 初始化卷积块
         model = [
             nn.ReflectionPad2d(3),
             nn.Conv2d(in_channels, 64, kernel_size=7),
@@ -83,7 +82,6 @@ class Discriminator(nn.Module):
     def __init__(self, in_channels=3):
         super().__init__()
 
-        # 卷积块
         model = [
             nn.Conv2d(in_channels, 64, kernel_size=4, stride=2, padding=1),
             nn.LeakyReLU(0.2, inplace=True)
@@ -122,7 +120,7 @@ class Discriminator(nn.Module):
 
 class Attention(nn.Module):
     def __init__(self, in_channels=3):
-        super.__init__()
+        super(Attention, self).__init__()
 
         model = [
             nn.Conv2d(in_channels, 32, kernel_size=7, stride=1, padding=3),
@@ -169,17 +167,18 @@ class Attention(nn.Module):
 
 # Add VGG loss
 def vgg_preprocess(batch):
-    tensortype = type(batch.data)
     (r, g, b) = torch.chunk(batch, 3, dim=1)
     batch = torch.cat((b, g, r), dim=1)  # convert RGB to BGR
-    batch = (batch + 1) * 255 * 0.5  # [-1, 1] -> [0, 255]
-    mean = tensortype(batch.data.size())
+    # batch = (batch + 1) * 255 * 0.5  # [-1, 1] -> [0, 255]
+    tensor_type = type(batch.data)
+    mean = tensor_type(batch.data.size())
+    # ImageNet中的平均BGR
     mean[:, 0, :, :] = 103.939
     mean[:, 1, :, :] = 116.779
     mean[:, 2, :, :] = 123.680
     mean = mean.to(device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
     batch = batch.to(device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
-    batch = batch.sub(Variable(mean))  # subtract mean
+    batch = batch.sub(Variable(mean))  # subtract imagenet mean
     return batch
 
 
@@ -187,118 +186,96 @@ def vgg_preprocess(batch):
 class PerceptualLoss(nn.Module):
     def __init__(self):
         super(PerceptualLoss, self).__init__()
-        self.instancenorm = nn.InstanceNorm2d(512, affine=False)
+        self.instancenorm = nn.InstanceNorm2d(128, affine=False)
 
     def compute_vgg_loss(self, vgg, img, target):
         img_vgg = vgg_preprocess(img)
         target_vgg = vgg_preprocess(target)
         img_fea = vgg(img_vgg)
         target_fea = vgg(target_vgg)
-        # if self.opt.no_vgg_instance:
-        #     return torch.mean((img_fea - target_fea) ** 2)
-        # else:
-        return torch.mean((self.instancenorm(img_fea) - self.instancenorm(target_fea)) ** 2)
+        return torch.mean(torch.abs(self.instancenorm(img_fea) - self.instancenorm(target_fea)))
 
 
 # 加载Vgg预训练模型
 def load_vgg16(model_dir, gpu_ids=0):
     if not os.path.exists(model_dir):
-        print('没有预训练模型')
-        os.mkdir(model_dir)
+        print('没有Vgg预训练模型!!!')
 
     vgg = Vgg16()
-    # vgg.cuda()
-    vgg.cuda(device=0)
+    vgg.cuda(device=gpu_ids)
     vgg.load_state_dict(torch.load(os.path.join(model_dir, 'vgg16.weight')), strict=False)
     # vgg = nn.DataParallel(vgg, gpu_ids)  # 多gpu跑
     return vgg
 
 
-# Vgg16 Module 这里直接返回卷积次高层/block4
+# Vgg16 Module 这里直接返回卷积的较低层/block2(conv2_2)
 class Vgg16(nn.Module):
     def __init__(self):
-        super().__init__()
+        super(Vgg16, self).__init__()
+        self.conv1_1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1)
+        self.conv1_2 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1)
 
-        model = [nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1),
-                 nn.ReLU(inplace=True),
-                 nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
-                 nn.ReLU(inplace=True)]
+        self.conv2_1 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)
+        self.conv2_2 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)
 
-        model += [nn.MaxPool2d(kernel_size=2, stride=2),
-                  nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
-                  nn.ReLU(inplace=True),
-                  nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),
-                  nn.ReLU(inplace=True)]
+        self.conv3_1 = nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1)
+        self.conv3_2 = nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1)
+        self.conv3_3 = nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1)
 
-        model += [nn.MaxPool2d(kernel_size=2, stride=2),
-                  nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1),
-                  nn.ReLU(inplace=True),
-                  nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),
-                  nn.ReLU(inplace=True),
-                  nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),
-                  nn.ReLU(inplace=True)]
+        self.conv4_1 = nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1)
+        self.conv4_2 = nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1)
+        self.conv4_3 = nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1)
 
-        model += [nn.MaxPool2d(kernel_size=2, stride=2),
-                  nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1),
-                  nn.ReLU(inplace=True),
-                  nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),
-                  nn.ReLU(inplace=True),
-                  nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),
-                  nn.ReLU(inplace=True)]
-
-        self.model = nn.Sequential(*model)
+        self.conv5_1 = nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1)
+        self.conv5_2 = nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1)
+        self.conv5_3 = nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1)
 
     def forward(self, x):
-        return self.model(x)
+        x = F.relu(self.conv1_1(x))
+        x = F.relu(self.conv1_2(x))
+        relu1_2 = x
+        x = F.max_pool2d(x, kernel_size=2, stride=2)
 
+        x = F.relu(self.conv2_1(x))
+        x = F.relu(self.conv2_2(x))
+        relu2_2 = x
+        x = F.max_pool2d(x, kernel_size=2, stride=2)
+
+        x = F.relu(self.conv3_1(x))
+        x = F.relu(self.conv3_2(x))
+        x = F.relu(self.conv3_3(x))
+        relu3_3 = x
+        x = F.max_pool2d(x, kernel_size=2, stride=2)
+
+        x = F.relu(self.conv4_1(x))
+        x = F.relu(self.conv4_2(x))
+        x = F.relu(self.conv4_3(x))
+        relu4_3 = x
+        x = F.max_pool2d(x, ker_size=2, stride=1)
+
+        x = F.relu(self.conv5_1(x))
+        x = F.relu(self.conv5_2(x))
+        x = F.relu(self.conv5_3(x))
+        relu5_3 = x
+
+        return relu2_2
 
 # class Vgg16(nn.Module):
 #     def __init__(self):
-#         super(Vgg16, self).__init__()
-#         self.conv1_1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1)
-#         self.conv1_2 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1)
+#         super().__init__()
 #
-#         self.conv2_1 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)
-#         self.conv2_2 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)
+#         model = [nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1),
+#                  nn.ReLU(inplace=True),
+#                  nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
+#                  nn.ReLU(inplace=True)]
 #
-#         self.conv3_1 = nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1)
-#         self.conv3_2 = nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1)
-#         self.conv3_3 = nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1)
+#         model += [nn.MaxPool2d(kernel_size=2, stride=2),
+#                   nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
+#                   nn.ReLU(inplace=True),
+#                   nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),
+#                   nn.ReLU(inplace=True)]
 #
-#         self.conv4_1 = nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1)
-#         self.conv4_2 = nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1)
-#         self.conv4_3 = nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1)
-#
-#         self.conv5_1 = nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1)
-#         self.conv5_2 = nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1)
-#         self.conv5_3 = nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1)
+#         self.model = nn.Sequential(*model)
 #
 #     def forward(self, x):
-#         h = F.relu(self.conv1_1(x))
-#         h = F.relu(self.conv1_2(h))
-#         relu1_2 = h
-#         h = F.max_pool2d(h, kernel_size=2, stride=2)
-#
-#         h = F.relu(self.conv2_1(h))
-#         h = F.relu(self.conv2_2(h))
-#         relu2_2 = h
-#         h = F.max_pool2d(h, kernel_size=2, stride=2)
-#
-#         h = F.relu(self.conv3_1(h))
-#         h = F.relu(self.conv3_2(h))
-#         h = F.relu(self.conv3_3(h))
-#         relu3_3 = h
-#         h = F.max_pool2d(h, kernel_size=2, stride=2)
-#
-#         h = F.relu(self.conv4_1(h))
-#         h = F.relu(self.conv4_2(h))
-#         h = F.relu(self.conv4_3(h))
-#         relu4_3 = h
-#         h = F.max_pool2d(h, ker_size=2, stride=1)
-#
-#         h = F.relu(self.conv5_1(h))
-#         h = F.relu(self.conv5_2(h))
-#         h = F.relu(self.conv5_3(h))
-#         relu5_3 = h
-#
-#         return relu4_3
+#         return self.model(x)

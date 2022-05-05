@@ -10,6 +10,7 @@ from torch import save
 from torch.autograd import Variable
 from visdom import Visdom
 
+
 # import matplotlib
 # matplotlib.use('Agg')
 # from matplotlib import pyplot as plt
@@ -27,7 +28,7 @@ def weights_init_normal(model):
 # 学习率衰减更新
 class LambdaLR():
     def __init__(self, n_epochs, offset, decay_start_epoch):
-        assert ((n_epochs - decay_start_epoch) > 0), "Decay must start before the training session ends!"
+        assert ((n_epochs - decay_start_epoch) > 0), "请在训练结束前开始进行衰减"
         self.n_epochs = n_epochs
         self.offset = offset
         self.decay_start_epoch = decay_start_epoch
@@ -39,7 +40,7 @@ class LambdaLR():
 # 生成图片缓冲区
 class ReplayBuffer:
     def __init__(self, max_size=50):
-        assert (max_size > 0), 'Empty buffer or trying to create a black hole. Be careful.'
+        assert (max_size > 0), '请勿清空缓冲区'
         self.max_size = max_size
         self.data = []
 

@@ -17,6 +17,14 @@ class FaceDetect:
     # 矫正人脸
     def align(self, image):
         landmarks = self.get_face_landmarks(image)
+        # 绘制关键点坐标
+        image_copy = image.copy()
+        for i in range(landmarks.shape[0]):
+            pt_position = (int(landmarks[i][0]), int(landmarks[i][1]))
+            cv2.circle(image_copy, pt_position, 3, (0, 0, 255), -1)
+        plt.imshow(image_copy)
+        plt.title('face_landmarks')
+        plt.show()
 
         if landmarks is None:
             return None
@@ -82,6 +90,8 @@ class FaceDetect:
         # 旋转后的关键点坐标
         landmarks = np.concatenate([landmarks, np.ones((landmarks.shape[0], 1))], axis=1)
         landmarks_rotate = np.dot(M, landmarks.T).T
+        left_eye_corner = landmarks_rotate[36]
+        right_eye_corner = landmarks_rotate[45]
         # 中间展示
         image_rotate_copy = image_rotate.copy()
         # 绘制两点
@@ -116,10 +126,10 @@ class FaceDetect:
         mark_list = [landmarks_top_index, landmarks_bottom_index, landmarks_left_index, landmarks_right_index]
         for i in range(landmarks.shape[0]):
             pt_position = (int(landmarks[i][0]), int(landmarks[i][1]))
-            cv2.circle(image_copy, pt_position, 8, (0, 0, 255), -1)
+            cv2.circle(image_copy, pt_position, 3, (0, 0, 255), -1)
         for index in mark_list:
             pt_position = (int(landmarks[index][0]), int(landmarks[index][1]))
-            cv2.circle(image_copy, pt_position, 8, (255, 0, 0), -1)
+            cv2.circle(image_copy, pt_position, 3, (255, 0, 0), -1)
         plt.imshow(image_copy)
         plt.title('face_top_bottom_left_right')
         plt.show()
@@ -206,15 +216,18 @@ class FaceSeg:
 
 
 if __name__ == '__main__':
-    for i in range(24):
+    for i in range(1):
         # prefix = random.randint(1601, 2000)
         # print(prefix)
         # print(i)
-        image_name = str(i + 4100) + '.png'
-        # image_name = 'WechatIMG2.jpeg'
-        img = cv2.cvtColor(cv2.imread(os.path.join('/Users/mac/Downloads/generated_yellow-stylegan2', image_name)),
-                           cv2.COLOR_BGR2RGB)
+        # image_name = str(i + 4100) + '.png'
+        # image_name = 'IMG_' + str(i + 3911) + '.JPG'
+        image_name = 'IMG_3918.JPG'
 
+        # img = cv2.cvtColor(cv2.imread(os.path.join('/Users/mac/Downloads/generated_yellow-stylegan2', image_name)),
+        #                    cv2.COLOR_BGR2RGB)
+        img = cv2.cvtColor(cv2.imread(os.path.join('/Users/mac/Downloads', image_name)),
+                           cv2.COLOR_BGR2RGB)
         # 打印原图出来看看
         # plt.title('img')
         # plt.imshow(img)
@@ -232,6 +245,10 @@ if __name__ == '__main__':
         # mask_dir = os.path.join(os.getcwd(), 'datasets', 'result_seg', image_name)
         segment = FaceSeg()
         mask = segment.get_mask(face)
+        # 中间展示
+        plt.title('face_mask')
+        plt.imshow(mask)
+        plt.show()
 
         # cv2.imwrite(mask_dir, mask)
 
@@ -241,9 +258,10 @@ if __name__ == '__main__':
         splice_mask = splice[:, :, 3][:, :, np.newaxis].copy() / 255.
         face_in_white_bg = (splice_face * splice_mask + (1 - splice_mask) * 255).astype(np.uint8)  # 背景变白色
         face_in_white_bg = cv2.resize(face_in_white_bg, (256, 256))  # convert to 512x512
-        # plt.title('face_white_bg')
-        # plt.imshow(face_in_white_bg)
-        # plt.show()
+        # 中间展示
+        plt.title('face_in_white_bg')
+        plt.imshow(face_in_white_bg)
+        plt.show()
 
         cv2.imwrite(os.path.join(os.getcwd(), 'datasets/test/', 'A', image_name),
                     cv2.cvtColor(face_in_white_bg, cv2.COLOR_RGB2BGR))

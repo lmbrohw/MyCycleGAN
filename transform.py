@@ -12,10 +12,11 @@ from preprocess import *
 def preprocess_cutout():
     img_path = './datasets/test_for_ui/A/original.png'
     img = cv2.cvtColor(cv2.imread(img_path), cv2.COLOR_BGR2RGB)
+    # img = cv2.cvtColor(cv2.imread(img_path))
     # 打印原图出来看看
-    # plt.title('img')
-    # plt.imshow(img)
-    # plt.show()
+    plt.title('img')
+    plt.imshow(img)
+    plt.show()
 
     # 检测人脸+裁剪多余背景
     detector = FaceDetect('cpu', 'dlib')
@@ -60,7 +61,7 @@ def transform():
     # netG_B2A = Generator(3, 3)
     # Load state dicts
     netG_A2B.load_state_dict(torch.load('saved_model/netG_A2B_95.pth', torch.device('cpu')), strict=False)
-    # netG_B2A.load_state_dict(torch.load(opt.generator_B2A, torch.device('cpu')), strict=False)
+    # netG_B2A.load_state_dict(torch.load('saved_model/netG_B2A_95.pth', torch.device('cpu')), strict=False)
 
     # Set model's test mode
     netG_A2B.eval()

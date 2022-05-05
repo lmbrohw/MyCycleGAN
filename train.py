@@ -14,7 +14,7 @@ parser.add_argument('--epoch', type=int, default=0, help='')
 parser.add_argument('--n_epochs', type=int, default=200, help='number of epochs of training')
 parser.add_argument('--input_nc', type=int, default=3, help='input image channels: 3 for RGB and 1 for grayscale')
 parser.add_argument('--output_nc', type=int, default=3, help='output image channels: 3 for RGB and 1 for grayscale')
-parser.add_argument('--batch_size', type=int, default=1, help='input batch size')
+parser.add_argument('--batch_size', type=int, default=2, help='input batch size')
 parser.add_argument('--dataroot', type=str, default='datasets/', help='root directory of the dataset')
 parser.add_argument('--lr', type=float, default=0.0002, help='initial the learning rate')
 parser.add_argument('--decay_epoch', type=int, default=100, help='')
@@ -93,7 +93,7 @@ lr_scheduler_D_B = torch.optim.lr_scheduler.LambdaLR(optimizer_D_B,
 # lr_scheduler_Attn = torch.optim.lr_scheduler.LambdaLR(optimizer_Attn, lr_lambda=LambdaLR(opt.n_epochs, opt.epoch, opt.decay_epoch).step)
 # lr_scheduler_Attn = torch.optim.lr_scheduler.MultiStepLR(optimizer_Attn, milestones=[30], gamma=0.1, last_epoch=startEpoch -1)
 
-# Dataset loader
+# 加载数据并处理
 transforms_ = [
     transforms.RandomHorizontalFlip(),  # 随机水平翻转
     transforms.ToTensor(),
@@ -112,7 +112,7 @@ target_fake = Tensor(opt.batch_size).fill_(0.0)  # 用于loss_GAN, 即(target_re
 fake_A_buffer = ReplayBuffer()
 fake_B_buffer = ReplayBuffer()
 
-# Loss plot
+# 训练过程可视化
 logger = Logger(opt.n_epochs, len(dataloader))
 
 # 从checkpoint中加载模型参数，恢复训练
@@ -139,7 +139,7 @@ if opt.resume is not 'None':
 
 for epoch in range(opt.start_epoch, opt.n_epochs):
     for i, batch in enumerate(dataloader):
-        # set model input
+        # model input (real_A, real_B)
         real_A = Variable(input_A.copy_(batch['A']))
         real_B = Variable(input_B.copy_(batch['B']))
 
